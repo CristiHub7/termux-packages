@@ -1,0 +1,35 @@
+name: Build aapt (aapt2) for Termux (aarch64)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout termux-packages
+        uses: actions/checkout@v4
+
+      - name: Free disk space (optional but helps)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android || true
+          df -h
+
+      - name: Build aapt in Termux Docker environment (aarch64)
+        run: |
+          chmod +x scripts/run-docker.sh
+          ./scripts/run-docker.sh bash -lc "./build-package.sh -a aarch64 -I aapt"
+
+      - name: Show produced debs
+        run: |
+          ls -lah output || true
+          find . -maxdepth 3 -type f -name "*.deb" -print || true
+
+      - name: Upload .deb artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: termux-aapt-aarch64-debs
+          path: |
+            output/*.deb
+          if-no-files-found: error
